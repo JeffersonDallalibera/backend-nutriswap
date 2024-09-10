@@ -3,12 +3,16 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from Config import Config
 from app.extensions import db
+from app.main import bp as main_bp
+from app.auth import bp as auth_bp
+from app.routes.alimento_routes import alimentos_bp
+from app.routes.tipo_alimento_routes import bp as tipo_alimento_bp
+from app.models.usuarios import Usuario
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     app.secret_key = app.config['SECRET_KEY']
-
 
     # Initialize Flask extensions
     db.init_app(app)
@@ -19,28 +23,19 @@ def create_app(config_class=Config):
     login_manager.login_view = 'auth.login'  # A rota para login
 
     # Register blueprints
-    from app.main import bp as main_bp
+
     app.register_blueprint(main_bp)
 
-    from app.posts import bp as posts_bp
-    app.register_blueprint(posts_bp, url_prefix='/posts')
-
-    from app.questions import bp as questions_bp
-    app.register_blueprint(questions_bp, url_prefix='/questions')
-
-    from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    @app.route('/test/')
-    def test_page():
-        return '<h1>Testing the Flask Application Factory Pattern</h1>'
+    app.register_blueprint(tipo_alimento_bp, url_prefix='/api')
 
-    # Load user
-    from app.models.usuarios import Usuario
+    app.register_blueprint(alimentos_bp, url_prefix='/api')
+
     @login_manager.user_loader
     def load_user(user_id):
         return Usuario.query.get(int(user_id))
 
-    CORS(app)  # Adiciona suporte a CORS
+    CORS(app)
 
     return app
