@@ -74,9 +74,6 @@ def buscar_equivalente(info_nutricional, tipo, quantidade):
             # Adicione outros nutrientes aqui
 
         df = pd.DataFrame(data)
-
-        print(df)
-
         # Cálculo de similaridade
         df['calorias_diff'] = np.abs(df['calorias'] - calorias_target)
         df['proteina_diff'] = np.abs(df['proteina'] - proteina_target)
