@@ -53,7 +53,6 @@ def buscar_equivalente(info_nutricional, tipo, quantidade):
         all_info_nutricional = InformacaoNutricional.query.join(Alimento).filter(
             Alimento.tipo_alimento_id == tipoAlimentoId).all()
 
-        # Criar um DataFrame com as informações
         data = {
             'alimento_id': [],
             'calorias': [],
@@ -61,7 +60,6 @@ def buscar_equivalente(info_nutricional, tipo, quantidade):
             'carboidrato': [],
             'lipidio': [],
             'fibra': [],
-            # Adicione outros nutrientes aqui
         }
 
         for info in all_info_nutricional:
@@ -71,27 +69,21 @@ def buscar_equivalente(info_nutricional, tipo, quantidade):
             data['carboidrato'].append(float(info.carboidrato))
             data['lipidio'].append(float(info.lipidio))
             data['fibra'].append(float(info.fibra))
-            # Adicione outros nutrientes aqui
 
         df = pd.DataFrame(data)
-        # Cálculo de similaridade
         df['calorias_diff'] = np.abs(df['calorias'] - calorias_target)
         df['proteina_diff'] = np.abs(df['proteina'] - proteina_target)
         df['carboidrato_diff'] = np.abs(df['carboidrato'] - carboidrato_target)
         df['lipidio_diff'] = np.abs(df['lipidio'] - lipidio_target)
         df['fibra_diff'] = np.abs(df['fibra'] - fibra_target)
 
-        # Calcular uma métrica de similaridade
         df['similaridade'] = df[
             ['calorias_diff', 'proteina_diff', 'carboidrato_diff', 'lipidio_diff', 'fibra_diff']].mean(axis=1)
 
-        # Filtrar os alimentos com base em um critério de similaridade
         equivalentes = df.nsmallest(6, 'similaridade')  # Pegando os 5 mais similares
 
-        # Buscar os objetos Alimento correspondentes e suas informações nutricionais
         alimentos_equivalentes = []
         for alimento_id in equivalentes['alimento_id']:
-            # Ignorar o alimento que está sendo procurado
             if alimento_id == info_nutricional.alimento_id:
                 continue
 
@@ -103,7 +95,6 @@ def buscar_equivalente(info_nutricional, tipo, quantidade):
                     'informacao_nutricional': info.to_dict()
                 })
 
-        # Retornar a lista de alimentos equivalentes com informações nutricionais
         return alimentos_equivalentes
 
     except Exception as e:

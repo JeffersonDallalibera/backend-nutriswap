@@ -11,6 +11,7 @@ from app.routes.alimento_routes import alimentos_bp
 from app.routes.nutricao_routes import nutricao_bp
 from app.routes.tipo_alimento_routes import bp as tipo_alimento_bp
 from app.models.usuarios import Usuario
+from app.routes.pessoa_routes import bp as pessoa_bp
 
 # Adicionando instância de Migrate
 migrate = Migrate()
@@ -36,6 +37,7 @@ def create_app(config_class=Config):
     app.register_blueprint(tipo_alimento_bp, url_prefix='/api')
     app.register_blueprint(alimentos_bp, url_prefix='/api')
     app.register_blueprint(nutricao_bp, url_prefix='/api')
+    app.register_blueprint(pessoa_bp, url_prefix='/api')
 
     @login_manager.user_loader
     def load_user(user_id):
