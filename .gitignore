@@ -1,0 +1,37 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Ambiente virtual
+venv/
+.venv/
+
+# Configurações de ambiente e IDEs
+.env
+*.env
+.vscode/
+.idea/
+
+# Arquivos de log
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# Arquivos de banco de dados
+*.sqlite3
+*.db
+
+# Cache
+*.cache
+
+# Testes
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+htmlcov/
+pytest_cache/

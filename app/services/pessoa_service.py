@@ -36,3 +36,16 @@ def buscar_todas_pessoas():
         return [pessoa.to_dict() for pessoa in pessoas]
     except SQLAlchemyError as e:
         raise e
+
+
+def criar_pessoa_pdf(idPessoa):
+    try:
+        print(str(idPessoa) + "->idPessoa")
+
+        # Obtém a primeira pessoa que corresponde ao ID
+        pessoa = PessoaDieta.query.filter(PessoaDieta.id_pessoa == idPessoa).first()
+
+        # Se a pessoa foi encontrada, retorna seu dicionário
+        return pessoa.to_dict() if pessoa else None
+    except SQLAlchemyError as e:
+        raise e
