@@ -7,7 +7,8 @@ bp = Blueprint('pdf', __name__)
 def generate_pdf():
     data = request.get_json()
 
-    if not data or 'idPessoa' not in data or 'dadosAlimentares' not in data:
+    # Verifica se os dados recebidos estão completos
+    if not data or 'idPessoa' not in data or 'refeicoes' not in data:
         return {"error": "Dados incompletos"}, 400
 
     # Gera o PDF com o serviço

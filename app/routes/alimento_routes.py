@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.alimento import Alimento
-from app.services.alimentos_service import get_alimentos_by_tipo
+from app.services.alimentos_service import get_alimentos_by_tipo, criar_alimento
 from app.services.informacao_nutricional_service import get_informacao_nutricional_by_alimento
 
 alimentos_bp = Blueprint('alimentos', __name__)
@@ -16,14 +16,13 @@ def list_alimentos():
         try:
             tipo = int(tipo_str)  # Converte o parâmetro para inteiro
             alimentos = get_alimentos_by_tipo(tipo)
-            return jsonify([alimento.to_dict() for alimento in alimentos]), 200
+            return jsonify([alimento.to_dict_alimento_descricao() for alimento in alimentos]), 200
         except ValueError:
             return jsonify({'error': 'ID do tipo de alimento inválido'}), 400
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     else:
         return jsonify({'error': 'Tipo de alimento não fornecido'}), 400
-
 
 
 @alimentos_bp.route('/calcular-alimento', methods=['POST'])
@@ -86,3 +85,32 @@ def calcular_alimento():
         return jsonify({'error': 'Erro no banco de dados', 'details': str(e)}), 500
     except Exception as e:
         return jsonify({'error': 'Erro no processamento', 'details': str(e)}), 500
+
+
+@alimentos_bp.route('/inserir', methods=['POST'])
+def adicionar_alimento():
+    try:
+        data = request.get_json()
+
+        nome = data.get('nome')
+        categoria = data.get('categoria')
+        descricao = data.get('descricao')
+        tipo_alimento_id = data.get('tipo_alimento_id')
+        informacoes_nutricionais = data.get('informacoes_nutricionais')
+
+        if not nome or not categoria or not tipo_alimento_id or not informacoes_nutricionais:
+            return jsonify({'error': 'Campos obrigatórios faltando'}), 400
+
+        # Chama o serviço para criar o novo alimento
+        novo_alimento = criar_alimento(nome, categoria, descricao, tipo_alimento_id, informacoes_nutricionais)
+
+        return jsonify({
+            'alimento_id': novo_alimento.alimento_id,
+            'nome': novo_alimento.nome,
+            'categoria': novo_alimento.categoria,
+            'descricao': novo_alimento.descricao,
+            'tipo_alimento_id': novo_alimento.tipo_alimento_id,
+            'message': 'Alimento criado com sucesso'
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

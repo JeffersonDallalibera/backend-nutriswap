@@ -1,23 +1,15 @@
 from io import BytesIO
 from flask import Response
 from xhtml2pdf import pisa
-from app.services.pessoa_service import criar_pessoa_pdf as pessoa_service_criar_pessoa_pdf
-
+from app.services.pessoa_service import buscar_pessoa_pdf as pessoa_service_buscar_pessoa_pdf
 
 class PDFService:
     @staticmethod
     def generate_pdf(data):
-        # Cria um buffer para armazenar o PDF em memória
         buffer = BytesIO()
-        pessoa_data = pessoa_service_criar_pessoa_pdf(data['idPessoa'])
-
-        # HTML para o PDF
+        pessoa_data = pessoa_service_buscar_pessoa_pdf(data['idPessoa'])
         html = PDFService.render_html(data, pessoa_data)
-
-        # Converte HTML para PDF
         pisa_status = pisa.CreatePDF(html, dest=buffer)
-
-        # Move o buffer para o início
         buffer.seek(0)
 
         if pisa_status.err:
@@ -27,7 +19,6 @@ class PDFService:
 
     @staticmethod
     def render_html(data, pessoa_data):
-        # Monta o HTML
         meals_html = ""
         if 'refeicoes' in data:
             for refeicao in data['refeicoes']:
@@ -42,9 +33,16 @@ class PDFService:
                     body {{
                         font-family: Arial, sans-serif;
                         margin: 20px;
-                    }}
-                    h1, h2, h3 {{
                         color: #333;
+                    }}
+                    h1, h2 {{
+                        text-align: center;
+                        color: #4CAF50;
+                    }}
+                    h3 {{
+                        color: #333;
+                        margin-top: 20px;
+                        margin-bottom: 10px;
                     }}
                     table {{
                         width: 100%;
@@ -54,16 +52,50 @@ class PDFService:
                     th, td {{
                         border: 1px solid #ddd;
                         padding: 8px;
+                        text-align: left;
+                        overflow-wrap: break-word;
+                        word-wrap: break-word;
                     }}
                     th {{
                         background-color: #f2f2f2;
+                    }}
+                    .person-info th {{
+                        width: 30%;
+                    }}
+                    .person-info td {{
+                        width: 70%;
+                        text-align: left;
+                    }}
+                    .meal-table {{
+                        width: 100%;
+                        table-layout: fixed;
+                    }}
+                    .meal-table th {{
+                        text-align: center;
+                    }}
+                    .meal-table td {{
+                        text-align: left;
+                        vertical-align: top;
+                    }}
+                    .meal-table th.alimento, .meal-table td.alimento {{
+                        width: 60%;
+                    }}
+                    .meal-table th.quantidade, .meal-table td.quantidade {{
+                        width: 20%;
+                    }}
+                    .meal-table th.tipo, .meal-table td.tipo {{
+                        width: 20%;
+                    }}
+                    .equivalente {{
+                        padding-left: 20px;
+                        font-style: italic;
                     }}
                 </style>
             </head>
             <body>
                 <h1>Plano de Dieta - NutriSwap</h1>
                 <h2>Informações da Pessoa</h2>
-                <table>
+                <table class="person-info">
                     <tr><th>Nome</th><td>{pessoa_data['nome_pessoa']}</td></tr>
                     <tr><th>Idade</th><td>{pessoa_data['idade_pessoa']}</td></tr>
                     <tr><th>Peso</th><td>{pessoa_data['peso_pessoa']} kg</td></tr>
@@ -81,11 +113,36 @@ class PDFService:
 
     @staticmethod
     def draw_meal(refeicao):
-        meal_html = f"<h3>{refeicao['tipo_refeicao'].capitalize()}: {refeicao['descricao']}</h3>"
-        meal_html += "<table><tr><th>Alimento</th><th>Quantidade</th><th>Tipo</th></tr>"
+        meal_html = f"<h3>{refeicao['nome']}</h3>"
+        meal_html += """
+            <table class="meal-table">
+                <tr>
+                    <th class="alimento">Alimento</th>
+                    <th class="quantidade">Quantidade</th>
+                    <th class="tipo">Tipo</th>
+                </tr>
+        """
 
         for alimento in refeicao['alimentos']:
-            meal_html += f"<tr><td>{alimento['nome']}</td><td>{alimento['quantidade']}</td><td>{alimento['tipo']}</td></tr>"
+            meal_html += f"""
+                <tr>
+                    <td class="alimento">{alimento['nome']}</td>
+                    <td class="quantidade">{alimento['quantidade']}</td>
+                    <td class="tipo">{alimento['tipoQuantidade']}</td>
+                </tr>
+            """
+
+            if 'equivalente' in alimento:
+                for eq in alimento['equivalente']:
+                    alimento_eq = eq['alimento']['nome']
+                    quantidade_ajustada = eq['quantidade_ajustada']
+                    meal_html += f"""
+                        <tr>
+                            <td class="alimento equivalente">{alimento_eq} (equivalente)</td>
+                            <td class="quantidade">{quantidade_ajustada:.2f}</td>
+                            <td class="tipo">{alimento['tipoQuantidade']}</td>
+                        </tr>
+                    """
 
         meal_html += "</table>"
         return meal_html

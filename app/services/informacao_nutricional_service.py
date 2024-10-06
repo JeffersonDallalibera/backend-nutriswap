@@ -3,6 +3,7 @@ import numpy as np
 from app.models.alimento import Alimento
 from app.models.informacao_nutricional import InformacaoNutricional
 from app.extensions import db
+from app.services.similariedade_service import calcular_similaridade
 
 
 def get_informacao_nutricional_by_alimento(alimento_id):
@@ -19,6 +20,8 @@ def calcular_informacao_nutricional(info_nutricional, quantidade, tipo_quantidad
     else:
         quantidade_final = float(quantidade)  # Quantidade em gramas diretamente
 
+    print("calculando informacao nutricional")
+
     return {
         'calorias': (info_nutricional.calorias / 100) * quantidade_final,
         'proteinas': (info_nutricional.proteina / 100) * quantidade_final,
@@ -33,71 +36,27 @@ def calcular_informacao_nutricional(info_nutricional, quantidade, tipo_quantidad
 
 
 def buscar_equivalente(info_nutricional, tipo, quantidade):
+    return calcular_similaridade(info_nutricional, tipo, quantidade)
+
+
+def adicionar_informacoes_nutricionais(alimento_id, informacoes):
     try:
-        print('ENTRANDO NO BUSCAR EQUIVALENTE')
+        nova_informacao_nutricional = InformacaoNutricional(
+            alimento_id=alimento_id,
+            proteina=informacoes.get('proteina'),
+            carboidrato=informacoes.get('carboidrato'),
+            lipidio=informacoes.get('lipidio'),
+            fibra=informacoes.get('fibra'),
+            calorias=informacoes.get('calorias'),
+            vitaminac=informacoes.get('vitaminac'),
+            calcio=informacoes.get('calcio'),
+            ferro=informacoes.get('ferro'),
+            sodio=informacoes.get('sodio')
+        )
 
-        # Converte a quantidade para gramas
-        quantidade_gramas = float(quantidade) * 100 if tipo == 'porcao' else float(quantidade)
-
-        # Cálculo dos limites nutricionais
-        calorias_target = float(info_nutricional.calorias) * (quantidade_gramas / 100)
-        proteina_target = float(info_nutricional.proteina)
-        carboidrato_target = float(info_nutricional.carboidrato)
-        lipidio_target = float(info_nutricional.lipidio)
-        fibra_target = float(info_nutricional.fibra)
-
-        # Buscar o tipo do alimento
-        tipoAlimentoId = Alimento.query.filter_by(alimento_id=info_nutricional.alimento_id).first().tipo_alimento_id
-
-        # Buscar todas as informações nutricionais do mesmo tipo
-        all_info_nutricional = InformacaoNutricional.query.join(Alimento).filter(
-            Alimento.tipo_alimento_id == tipoAlimentoId).all()
-
-        data = {
-            'alimento_id': [],
-            'calorias': [],
-            'proteina': [],
-            'carboidrato': [],
-            'lipidio': [],
-            'fibra': [],
-        }
-
-        for info in all_info_nutricional:
-            data['alimento_id'].append(info.alimento_id)
-            data['calorias'].append(float(info.calorias))
-            data['proteina'].append(float(info.proteina))
-            data['carboidrato'].append(float(info.carboidrato))
-            data['lipidio'].append(float(info.lipidio))
-            data['fibra'].append(float(info.fibra))
-
-        df = pd.DataFrame(data)
-        df['calorias_diff'] = np.abs(df['calorias'] - calorias_target)
-        df['proteina_diff'] = np.abs(df['proteina'] - proteina_target)
-        df['carboidrato_diff'] = np.abs(df['carboidrato'] - carboidrato_target)
-        df['lipidio_diff'] = np.abs(df['lipidio'] - lipidio_target)
-        df['fibra_diff'] = np.abs(df['fibra'] - fibra_target)
-
-        df['similaridade'] = df[
-            ['calorias_diff', 'proteina_diff', 'carboidrato_diff', 'lipidio_diff', 'fibra_diff']].mean(axis=1)
-
-        equivalentes = df.nsmallest(6, 'similaridade')  # Pegando os 5 mais similares
-
-        alimentos_equivalentes = []
-        for alimento_id in equivalentes['alimento_id']:
-            if alimento_id == info_nutricional.alimento_id:
-                continue
-
-            alimento = Alimento.query.filter_by(alimento_id=alimento_id).first()
-            info = InformacaoNutricional.query.filter_by(alimento_id=alimento_id).first()
-            if alimento and info:
-                alimentos_equivalentes.append({
-                    'alimento': alimento.to_dict(),
-                    'informacao_nutricional': info.to_dict()
-                })
-
-        return alimentos_equivalentes
-
+        # Adiciona a informação nutricional ao banco de dados
+        db.session.add(nova_informacao_nutricional)
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
-        raise e
-
+        raise Exception(f"Erro ao adicionar informações nutricionais: {str(e)}")

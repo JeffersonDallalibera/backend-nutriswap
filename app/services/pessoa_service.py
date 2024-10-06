@@ -23,6 +23,7 @@ def inserir_pessoa(pessoa_data):
 
         db.session.add(nova_pessoa)
         db.session.commit()
+        print(nova_pessoa.to_dict())
         return nova_pessoa.to_dict()
 
     except SQLAlchemyError as e:
@@ -38,7 +39,7 @@ def buscar_todas_pessoas():
         raise e
 
 
-def criar_pessoa_pdf(idPessoa):
+def buscar_pessoa_pdf(idPessoa):
     try:
         print(str(idPessoa) + "->idPessoa")
 
