@@ -1,9 +1,9 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_login import LoginManager
-from flask_migrate import Migrate  # Importar Flask-Migrate
+from flask_migrate import Migrate
 
-from Config import Config
+from app.Config import Config  # Certifique-se de que o nome está correto
 from app.extensions import db
 from app.main import bp as main_bp
 from app.auth import bp as auth_bp
@@ -13,12 +13,15 @@ from app.routes.tipo_alimento_routes import bp as tipo_alimento_bp
 from app.models.usuarios import Usuario
 from app.routes.pessoa_routes import bp as pessoa_bp
 from app.routes.pdf_routes import bp as pdf_bp
+from dotenv import load_dotenv  # Importar para carregar variáveis de ambiente
 
 # Adicionando instância de Migrate
 migrate = Migrate()
 
 
 def create_app(config_class=Config):
+    load_dotenv()  # Carregar variáveis de ambiente do arquivo .env
+
     app = Flask(__name__)
     app.config.from_object(config_class)
     app.secret_key = app.config['SECRET_KEY']
